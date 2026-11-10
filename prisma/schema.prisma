@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Installation {
+  id                   String       @id @default(cuid())
+  githubInstallationId String?      @unique
+  accountLogin         String
+  accountType          String
+  installedBy          String?
+  createdAt            DateTime     @default(now())
+  repositories         Repository[]
+}
+
+model Repository {
+  id                String       @id @default(cuid())
+  installationId    String
+  installation      Installation @relation(fields: [installationId], references: [id])
+  githubRepoId      String?
+  owner             String
+  name              String
+  defaultBranch     String       @default("main")
+  enabled           Boolean      @default(false)
+  cloneUrl          String?
+  localPath         String?
+  monthlyCap        Int          @default(1000)
+  pageLoadTimeoutMs Int          @default(60000)
+  checkTimeoutMs    Int          @default(900000)
+  createdAt         DateTime     @default(now())
+  boot              BootConfig?
+  secrets           Secret[]
+  checks            Check[]
+
+  @@unique([installationId, owner, name])
+}
+
+model BootConfig {
+  id             String     @id @default(cuid())
+  repositoryId   String     @unique
+  repository     Repository @relation(fields: [repositoryId], references: [id])
+  installCommand String     @default("")
+  startCommand   String
+  previewUrl     String
+  nodeVersion    String
+  steps          String     @default("[]")
+}
+
+model Secret {
+  id           String     @id @default(cuid())
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id])
+  name         String
+  ciphertext   String
+
+  @@unique([repositoryId, name])
+}
+
+model GithubApp {
+  id              String @id @default("default")
+  appId           String
+  slug            String
+  name            String
+  privateKey      String
+  webhookSecret   String
+  clientId        String @default("")
+  clientSecret    String @default("")
+}
+
+model Check {
+  id               String    @id @default(cuid())
+  repositoryId     String
+  repository       Repository @relation(fields: [repositoryId], references: [id])
+  pullNumber       Int
+  headSha          String
+  title            String    @default("")
+  status           String
+  conclusion       String?
+  githubCheckRunId String?
+  commentId        String?
+  commentBody      String    @default("")
+  diffText         String    @default("")
+  billed           Boolean   @default(false)
+  bootStarted      Boolean   @default(false)
+  cancelReason     String?
+  pickerPrompt     String?
+  pickerResponse   String?
+  bootLog          String    @default("")
+  sourcePath       String?
+  flagsJson        String?
+  errorSummary     String?
+  startedAt        DateTime?
+  finishedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  flows            Flow[]
+  tags             Tag[]
+  job              Job?
+}
+
+model Flow {
+  id         String  @id @default(cuid())
+  checkId    String
+  check      Check   @relation(fields: [checkId], references: [id])
+  position   Int
+  name       String
+  url        String
+  kind       String
+  reason     String
+  steps      String
+  result     String  @default("pending")
+  clickLog   String  @default("")
+  failUrl    String?
+  lastAction String?
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  checkId   String
+  check     Check    @relation(fields: [checkId], references: [id])
+  verdict   String
+  actor     String
+  createdAt DateTime @default(now())
+
+  @@unique([checkId, actor])
+}
+
+model Job {
+  id        String   @id @default(cuid())
+  checkId   String   @unique
+  check     Check    @relation(fields: [checkId], references: [id])
+  state     String
+  createdAt DateTime @default(now())
+}

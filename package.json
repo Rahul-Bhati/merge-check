@@ -1,0 +1,32 @@
+{
+  "name": "merge-check",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "worker": "tsx src/worker/loop.ts",
+    "setup": "prisma generate && prisma db push && npm install --prefix fixtures/next-preview",
+    "browser": "playwright install chromium",
+    "test": "node --require ./test/preload.cjs --import tsx --test --test-concurrency=1 --test-timeout 240000 test/logic.test.ts test/store.test.ts test/pipeline.test.ts",
+    "typecheck": "tsc --noEmit",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.16.2",
+    "next": "^15.5.4",
+    "playwright": "^1.55.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.6",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "prisma": "^6.16.2",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
